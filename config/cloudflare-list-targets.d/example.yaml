@@ -1,0 +1,43 @@
+# Target Configuration Example
+# Place this file (and any additional target configs) into:
+# /etc/crowdsec/bouncers/cloudflare-list-targets.d/<filename>.yaml
+# Variable tokens (${VAR}) are resolved from /etc/default/crowdsec-cloudflare-list-bouncer
+
+# Target name: An arbitrary label you assign to identify this Cloudflare target.
+# You can replace "my-account" with any name of your choice (e.g., "production", "client-a", "personal-blog").
+# This value does not depend on Cloudflare and is only used in daemon log messages (e.g., target=my-account).
+name: my-account
+
+# Cloudflare API Credentials and List IDs:
+# Values are resolved dynamically from /etc/default/crowdsec-cloudflare-list-bouncer
+#
+# Documentation & Portal links:
+# - API Token creation: https://dash.cloudflare.com/profile/api-tokens
+#   (Required permission: Account > Account Filter Lists > Edit or Account Rules Lists > Edit)
+# - Account ID: Found in your dashboard URL: https://dash.cloudflare.com/<ACCOUNT_ID>/
+# - IP Lists official doc: https://developers.cloudflare.com/waf/tools/lists/custom-lists/
+# - IP Lists management UI: https://dash.cloudflare.com/<ACCOUNT_ID>/configurations/lists
+#   (Create an IP list with content type "IP addresses" and copy its 32-character List ID)
+cf_api_token: ${CF_API_TOKEN}
+cf_account_id: ${CF_ACCOUNT_ID}
+cf_list_id: ${CF_BAN_LIST_ID}
+
+# Prefix prepended to the Cloudflare list item comment (formatted as "<prefix>:<scenario>", e.g. "crowdsec:ssh-bf"):
+cf_comment_prefix: crowdsec
+
+# Allowed decision origins to sync to this Cloudflare list:
+# Supported values in CrowdSec:
+#   - "crowdsec": Automatic alerts detected by local scenarios (e.g., ssh-bf, http-crawl)
+#   - "cscli": Manual bans added by administrators using "cscli decisions add"
+#   - "CAPI": Community blocklists received from CrowdSec Central API (warning: high volume, can exceed Cloudflare list limits)
+allowed_origins:
+  - crowdsec
+  - cscli
+
+# Allowed decision types to sync to this Cloudflare list:
+# Supported values in CrowdSec:
+#   - "ban": Standard IP blocking remediation (recommended for Cloudflare IP lists)
+#   - "captcha": Captcha challenge decisions (can be synced as blocked IPs if desired)
+#   - "throttle": Rate limiting decisions
+allowed_decision_types:
+  - ban

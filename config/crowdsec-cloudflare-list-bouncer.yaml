@@ -1,0 +1,7 @@
+# CrowdSec to Cloudflare List Bouncer Configuration
+api_url: http://127.0.0.1:8080/
+api_key: ${CS_LAPI_KEY}
+poll_interval: 10s
+log_level: info
+log_type: text
+targets_dir: /etc/crowdsec/bouncers/cloudflare-list-targets.d/

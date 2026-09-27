@@ -1,0 +1,23 @@
+[Unit]
+Description=CrowdSec to Cloudflare IP List Synchronization Daemon
+After=network-online.target crowdsec.service
+Wants=network-online.target
+Documentation=https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/crowdsec-cloudflare-list-bouncer
+ExecStartPre=/usr/local/bin/crowdsec-cloudflare-list-bouncer -c /etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml -t
+ExecStart=/usr/local/bin/crowdsec-cloudflare-list-bouncer -c /etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml
+Restart=on-failure
+RestartSec=10s
+
+# Security Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadOnlyPaths=/etc/crowdsec/bouncers
+
+[Install]
+WantedBy=multi-user.target

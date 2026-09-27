@@ -1,0 +1,39 @@
+name: "crowdsec-cloudflare-list-bouncer"
+arch: "${ARCH}"
+platform: "linux"
+version: "${VERSION}"
+section: "net"
+priority: "optional"
+maintainer: "underhax <https://github.com/underhax>"
+description: "CrowdSec bouncer syncing LAPI decisions to Cloudflare IP Lists"
+homepage: "https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer"
+license: "MIT"
+
+contents:
+  - src: ./crowdsec-cloudflare-list-bouncer
+    dst: /usr/local/bin/crowdsec-cloudflare-list-bouncer
+    file_info:
+      mode: 0500
+  - src: ./config/crowdsec-cloudflare-list-bouncer.default
+    dst: /etc/default/crowdsec-cloudflare-list-bouncer
+    type: "config|noreplace"
+    file_info:
+      mode: 0400
+  - src: ./config/crowdsec-cloudflare-list-bouncer.yaml
+    dst: /etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml
+    type: "config|noreplace"
+    file_info:
+      mode: 0400
+  - src: ./config/cloudflare-list-targets.d/example.yaml
+    dst: /etc/crowdsec/bouncers/cloudflare-list-targets.d/main.yaml
+    type: "config|noreplace"
+    file_info:
+      mode: 0400
+  - src: ./systemd/crowdsec-cloudflare-list-bouncer.service
+    dst: /etc/systemd/system/crowdsec-cloudflare-list-bouncer.service
+    file_info:
+      mode: 0644
+
+scripts:
+  postinstall: ./scripts/postinstall.sh
+  preremove: ./scripts/preremove.sh

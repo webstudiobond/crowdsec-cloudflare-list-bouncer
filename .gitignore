@@ -1,0 +1,44 @@
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+crowdsec-cloudflare-list-bouncer
+!cmd/crowdsec-cloudflare-list-bouncer/
+crowdsec-cloudflare-list-bouncer-linux-amd64
+dist/
+.DS_Store
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+coverage/
+*.coverprofile
+profile.cov
+.bashunit/
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
+
+# Editor/IDE
+# .idea/
+# .vscode/
+
+*.md
+!README.md
+!DEVELOPMENT.md
+!.github/SECURITY.md

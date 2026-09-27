@@ -1,0 +1,24 @@
+# Environment variables for crowdsec-cloudflare-list-bouncer
+# Loaded automatically by systemd via:
+# EnvironmentFile=-/etc/default/crowdsec-cloudflare-list-bouncer
+#
+# Permissions MUST be 0400 (root:root) to protect secrets!
+
+# CrowdSec LAPI Key (generated via: cscli bouncers add <name>)
+CS_LAPI_KEY="your-crowdsec-lapi-key-here"
+
+# Cloudflare Primary Target Credentials:
+# Used by target configuration in /etc/crowdsec/bouncers/cloudflare-list-targets.d/main.yaml
+# (template: config/cloudflare-list-targets.d/example.yaml)
+CF_API_TOKEN="your-cloudflare-api-token-here"
+CF_ACCOUNT_ID="your-cloudflare-account-id-here"
+CF_BAN_LIST_ID="your-cloudflare-ban-list-id-here"
+
+# Additional Cloudflare Targets:
+# You can define multiple targets in /etc/crowdsec/bouncers/cloudflare-list-targets.d/<name>.yaml
+# using any variable names you prefer (e.g., SECOND, BACKUP, CLIENT).
+# The only requirement is that the ${VARIABLE_NAME} in your target YAML file
+# (located in /etc/crowdsec/bouncers/cloudflare-list-targets.d/) matches the variable name here.
+# CF_SECOND_API_TOKEN="your-second-account-token-here"
+# CF_SECOND_ACCOUNT_ID="your-second-account-id-here"
+# CF_SECOND_BAN_LIST_ID="your-second-ban-list-id-here"

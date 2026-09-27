@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: Install nfpm
+        run: |
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+
+      - name: Build and Package
+        run: |
+          mkdir -p release_assets
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          for arch in amd64 arm64; do
+            echo "Building binary for linux/${arch}..."
+            mkdir -p "build_linux_${arch}"
+            CGO_ENABLED=0 GOOS=linux GOARCH=${arch} go build \
+              -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}'" \
+              -o "build_linux_${arch}/crowdsec-cloudflare-list-bouncer" \
+              ./cmd/crowdsec-cloudflare-list-bouncer
+
+            cp LICENSE "build_linux_${arch}/"
+            cp README.md "build_linux_${arch}/"
+
+            cd "build_linux_${arch}"
+            tar -czvf "../release_assets/crowdsec-cloudflare-list-bouncer_${VERSION}_linux_${arch}.tar.gz" ./*
+            cd ..
+
+            # Stage binary at repository root for nfpm packaging
+            cp "build_linux_${arch}/crowdsec-cloudflare-list-bouncer" ./crowdsec-cloudflare-list-bouncer
+            ARCH=${arch} VERSION=${VERSION} nfpm package --packager deb --target release_assets/
+            ARCH=${arch} VERSION=${VERSION} nfpm package --packager rpm --target release_assets/
+            rm -f ./crowdsec-cloudflare-list-bouncer
+          done
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: release_assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
