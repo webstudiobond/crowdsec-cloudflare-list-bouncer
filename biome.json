@@ -22,7 +22,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["index.html"]
+    "includes": ["index.html", "favicon.svg"]
   },
   "formatter": {
     "enabled": true,

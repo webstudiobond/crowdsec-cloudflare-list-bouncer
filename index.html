@@ -11,6 +11,12 @@
       name="description"
       content="Official APT and RPM package repository for crowdsec-cloudflare-list-bouncer."
     >
+    <meta name="darkreader-lock">
+    <link
+      rel="icon"
+      href="favicon.svg"
+      type="image/svg+xml"
+    >
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests;"
@@ -96,15 +102,28 @@
     }
 
     .brand {
-      overflow: hidden;
-      text-overflow: ellipsis;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      min-width: 0;
       font-size: 24px;
       font-weight: 300;
       line-height: 1.2;
       color: #ffffff;
       letter-spacing: -0.01em;
-      white-space: nowrap;
       cursor: default;
+    }
+
+    .brand-icon {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+    }
+
+    .brand-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .nav-actions {
@@ -414,7 +433,16 @@
   <body>
     <header class="site-header">
       <div class="header-container">
-        <div class="brand">CrowdSec Cloudflare List Bouncer</div>
+        <div class="brand">
+          <img
+            class="brand-icon"
+            src="favicon.svg"
+            alt=""
+            width="26"
+            height="26"
+          >
+          <span class="brand-title">CrowdSec Cloudflare List Bouncer</span>
+        </div>
         <div class="nav-actions">
           <a
             class="icon-btn"
