@@ -1,7 +1,7 @@
 # Security Policy
 
 ## Supported Versions
-We currently provide security updates for the following versions of angie-docker=compose:
+We currently provide security updates for the following versions of crowdsec-cloudflare-list-bouncer:
 
 | Version | Supported          |
 | ------- | ------------------ |
