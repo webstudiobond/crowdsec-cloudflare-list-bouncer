@@ -80,8 +80,8 @@ Add the official repository to receive seamless updates via standard system pack
 
 ```bash
 sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/webstudiobond.gpg | sudo tee /etc/apt/keyrings/webstudiobond.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/webstudiobond.gpg] https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/deb stable main" | sudo tee /etc/apt/sources.list.d/crowdsec-cloudflare-list-bouncer.list
+curl -fsSL https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/webstudiobond.asc | sudo tee /etc/apt/keyrings/webstudiobond.asc > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/webstudiobond.asc] https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/deb stable main" | sudo tee /etc/apt/sources.list.d/crowdsec-cloudflare-list-bouncer.list
 sudo apt update
 sudo apt install crowdsec-cloudflare-list-bouncer
 ```
@@ -96,7 +96,7 @@ baseurl=https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/rpm/
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
-gpgkey=https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/webstudiobond.gpg
+gpgkey=https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/webstudiobond.asc
 EOF
 sudo dnf install crowdsec-cloudflare-list-bouncer
 ```
