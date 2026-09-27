@@ -22,8 +22,6 @@ cleanup() {
   trap - EXIT INT TERM
 }
 
-trap cleanup EXIT INT TERM
-
 check_systemd_active() {
   local active
   active="no"
@@ -67,7 +65,8 @@ main() {
   case "${first_arg}" in
   -h | --help)
     usage
-    exit 0
+    cleanup
+    return 0
     ;;
   "" | configure | [0-9]*)
     ;;
@@ -78,7 +77,14 @@ main() {
 
   configure_service
   cleanup
-  exit 0
+  return 0
 }
 
-main "$@"
+case "${BASH_SOURCE[0]}" in
+"${0}" | "${BASH_SOURCE_OVERRIDE:-}")
+  trap cleanup EXIT INT TERM
+  main "$@"
+  ;;
+*)
+  ;;
+esac

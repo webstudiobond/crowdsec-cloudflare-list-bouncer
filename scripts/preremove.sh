@@ -22,8 +22,6 @@ cleanup() {
   trap - EXIT INT TERM
 }
 
-trap cleanup EXIT INT TERM
-
 check_systemd_active() {
   local active
   active="no"
@@ -36,7 +34,8 @@ stop_and_disable_service() {
   systemd_state="$(check_systemd_active)"
   case "${systemd_state}" in
   yes)
-    systemctl disable --now "${SERVICE_NAME}" >/dev/null 2>&1 || true
+    systemctl is-active --quiet "${SERVICE_NAME}" 2>/dev/null && systemctl stop "${SERVICE_NAME}" >/dev/null 2>&1 || true
+    systemctl is-enabled --quiet "${SERVICE_NAME}" 2>/dev/null && systemctl disable "${SERVICE_NAME}" >/dev/null 2>&1 || true
     ;;
   *)
     ;;
@@ -44,6 +43,8 @@ stop_and_disable_service() {
 }
 
 main() {
+  trap cleanup EXIT INT TERM
+
   case "${TRACE:-0}" in
   1)
     set -x
@@ -58,7 +59,8 @@ main() {
   case "${first_arg}" in
   -h | --help)
     usage
-    exit 0
+    cleanup
+    return 0
     ;;
   "" | remove | upgrade | deconfigure | failed-upgrade | [0-9]*)
     ;;
@@ -69,7 +71,14 @@ main() {
 
   stop_and_disable_service
   cleanup
-  exit 0
+  return 0
 }
 
-main "$@"
+case "${BASH_SOURCE[0]}" in
+"${0}" | "${BASH_SOURCE_OVERRIDE:-}")
+  trap cleanup EXIT INT TERM
+  main "$@"
+  ;;
+*)
+  ;;
+esac

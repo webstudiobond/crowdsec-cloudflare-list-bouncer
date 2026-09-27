@@ -11,7 +11,7 @@ license: "MIT"
 
 contents:
   - src: ./crowdsec-cloudflare-list-bouncer
-    dst: /usr/local/bin/crowdsec-cloudflare-list-bouncer
+    dst: /usr/bin/crowdsec-cloudflare-list-bouncer
     file_info:
       mode: 0500
   - src: ./config/crowdsec-cloudflare-list-bouncer.default
@@ -37,3 +37,4 @@ contents:
 scripts:
   postinstall: ./scripts/postinstall.sh
   preremove: ./scripts/preremove.sh
+  postremove: ./scripts/postremove.sh

@@ -19,6 +19,6 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /bin/crowdsec-cloudflare-list-bouncer /usr/local/bin/crowdsec-cloudflare-list-bouncer
+COPY --from=builder /bin/crowdsec-cloudflare-list-bouncer /usr/bin/crowdsec-cloudflare-list-bouncer
 
-ENTRYPOINT ["/usr/local/bin/crowdsec-cloudflare-list-bouncer"]
+ENTRYPOINT ["/usr/bin/crowdsec-cloudflare-list-bouncer"]

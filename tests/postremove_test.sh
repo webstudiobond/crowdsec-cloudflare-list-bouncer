@@ -2,28 +2,28 @@
 set -euo pipefail
 
 set_up() {
-  source ./scripts/preremove.sh
+  source ./scripts/postremove.sh
 }
 
-test_preremove_check_systemd_active() {
+test_postremove_check_systemd_active() {
   local result
   result="$(check_systemd_active)"
   assert_not_empty "${result}"
 }
 
-test_preremove_help_short() {
+test_postremove_help_short() {
   local output
   output="$(main -h)"
   assert_contains "Usage:" "${output}"
 }
 
-test_preremove_help_long() {
+test_postremove_help_long() {
   local output
   output="$(main --help)"
   assert_contains "Usage:" "${output}"
 }
 
-test_preremove_invalid_argument() {
+test_postremove_invalid_argument() {
   local exit_code
   set +e
   (main --unsupported-arg) >/dev/null 2>&1
@@ -32,43 +32,28 @@ test_preremove_invalid_argument() {
   assert_equals "1" "${exit_code}"
 }
 
-test_preremove_default_execution() {
+test_postremove_default_execution() {
   (main)
   assert_successful_code
 }
 
-test_preremove_remove_argument() {
+test_postremove_remove_argument() {
   (main remove)
   assert_successful_code
 }
 
-test_preremove_upgrade_argument() {
-  (main upgrade)
+test_postremove_purge_argument() {
+  (main purge)
   assert_successful_code
 }
 
-test_preremove_deconfigure_argument() {
-  (main deconfigure)
-  assert_successful_code
-}
-
-test_preremove_failed_upgrade_argument() {
-  (main failed-upgrade)
-  assert_successful_code
-}
-
-test_preremove_number_argument() {
-  (main 1)
-  assert_successful_code
-}
-
-test_preremove_trace_enabled() {
+test_postremove_trace_enabled() {
   local TRACE=1
   (main)
   assert_successful_code
 }
 
-test_preremove_stop_and_disable_active() {
+test_postremove_reload_systemd_active() {
   (
     check_systemd_active() {
       printf "yes"
@@ -76,18 +61,18 @@ test_preremove_stop_and_disable_active() {
     systemctl() {
       return 0
     }
-    stop_and_disable_service
+    reload_systemd
     check_systemd_active >/dev/null
     systemctl >/dev/null 2>&1
   )
   assert_successful_code
 }
 
-test_preremove_direct_invocation_block() {
+test_postremove_direct_invocation_block() {
   local output
   output="$(
-    export BASH_SOURCE_OVERRIDE="./scripts/preremove.sh"
-    source ./scripts/preremove.sh -h
+    export BASH_SOURCE_OVERRIDE="./scripts/postremove.sh"
+    source ./scripts/postremove.sh -h
   )"
   assert_contains "Usage:" "${output}"
 }

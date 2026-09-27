@@ -59,8 +59,8 @@ build:
 	go build -ldflags "-s -w -X main.Version=$(VERSION)" -o crowdsec-cloudflare-list-bouncer ./cmd/crowdsec-cloudflare-list-bouncer
 
 install: build
-	install -d /usr/local/bin /etc/default /etc/crowdsec/bouncers/cloudflare-list-targets.d /etc/systemd/system
-	install -m 500 crowdsec-cloudflare-list-bouncer /usr/local/bin/
+	install -d /usr/bin /etc/default /etc/crowdsec/bouncers/cloudflare-list-targets.d /etc/systemd/system
+	install -m 500 crowdsec-cloudflare-list-bouncer /usr/bin/
 	install -m 400 config/crowdsec-cloudflare-list-bouncer.default /etc/default/crowdsec-cloudflare-list-bouncer
 	install -m 400 config/crowdsec-cloudflare-list-bouncer.yaml /etc/crowdsec/bouncers/
 	install -m 400 config/cloudflare-list-targets.d/example.yaml /etc/crowdsec/bouncers/cloudflare-list-targets.d/main.yaml
@@ -70,7 +70,7 @@ install: build
 
 uninstall:
 	systemctl disable --now crowdsec-cloudflare-list-bouncer 2>/dev/null || true
-	rm -f /usr/local/bin/crowdsec-cloudflare-list-bouncer
+	rm -f /usr/bin/crowdsec-cloudflare-list-bouncer
 	rm -f /etc/systemd/system/crowdsec-cloudflare-list-bouncer.service
 	systemctl daemon-reload
 

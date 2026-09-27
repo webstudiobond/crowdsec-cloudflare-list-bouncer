@@ -202,7 +202,7 @@ Strict permissions follow the Principle of Least Privilege (Security Hardening):
 
 | Source File | Destination on Server | Permissions | Ownership | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `crowdsec-cloudflare-list-bouncer` | `/usr/local/bin/crowdsec-cloudflare-list-bouncer` | `0500` | `root:root` | Binary executable |
+| `crowdsec-cloudflare-list-bouncer` | `/usr/bin/crowdsec-cloudflare-list-bouncer` | `0500` | `root:root` | Binary executable |
 | `config/crowdsec-cloudflare-list-bouncer.default` | `/etc/default/crowdsec-cloudflare-list-bouncer` | `0400` | `root:root` | Secrets environment file |
 | `config/crowdsec-cloudflare-list-bouncer.yaml` | `/etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml` | `0400` | `root:root` | Main configuration |
 | `config/cloudflare-list-targets.d/` | `/etc/crowdsec/bouncers/cloudflare-list-targets.d/` | `0700` | `root:root` | Targets directory |

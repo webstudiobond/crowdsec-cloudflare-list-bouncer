@@ -43,9 +43,8 @@ Synchronizes [CrowdSec](https://www.crowdsec.net/) LAPI decisions into [Cloudfla
 │       └── system/
 │           └── crowdsec-cloudflare-list-bouncer.service # Systemd service unit - 0644
 └── usr/
-    └── local/
-        └── bin/
-            └── crowdsec-cloudflare-list-bouncer         # Static binary - 0500
+    └── bin/
+        └── crowdsec-cloudflare-list-bouncer             # Static binary - 0500
 ```
 
 </details>
@@ -73,19 +72,33 @@ sudo cscli bouncers add cloudflare-list-bouncer
 
 ### Installation
 
-#### Debian / Ubuntu
+#### Automated Installation
 
-Download the `.deb` package from [Releases](https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer/releases):
+Run the automated installer script to detect your platform architecture, verify SHA256 checksums from GitHub Releases, and install the package:
 
 ```bash
+curl -fSsL https://raw.githubusercontent.com/webstudiobond/crowdsec-cloudflare-list-bouncer/main/scripts/install.sh | sudo bash
+```
+
+#### Manual Download & Verification
+
+Download the latest package from [Releases](https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer/releases), verify its SHA256 digest from the GitHub API, and install:
+
+Debian / Ubuntu:
+
+```bash
+curl -fSsLO https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer/releases/latest/download/crowdsec-cloudflare-list-bouncer_<version>_<arch>.deb
+EXPECTED_HASH=$(curl -fSs https://api.github.com/repos/webstudiobond/crowdsec-cloudflare-list-bouncer/releases/latest | jq -r '.assets[] | select(.name == "crowdsec-cloudflare-list-bouncer_<version>_<arch>.deb") | .digest' | sed 's/sha256://')
+echo "${EXPECTED_HASH}  crowdsec-cloudflare-list-bouncer_<version>_<arch>.deb" | sha256sum -c -
 sudo dpkg -i crowdsec-cloudflare-list-bouncer_<version>_<arch>.deb
 ```
 
-#### RHEL / Fedora / AlmaLinux
-
-Download the `.rpm` package from [Releases](https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer/releases):
+RHEL / Fedora / AlmaLinux:
 
 ```bash
+curl -fSsLO https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer/releases/latest/download/crowdsec-cloudflare-list-bouncer-<version>.<arch>.rpm
+EXPECTED_HASH=$(curl -fSs https://api.github.com/repos/webstudiobond/crowdsec-cloudflare-list-bouncer/releases/latest | jq -r '.assets[] | select(.name == "crowdsec-cloudflare-list-bouncer-<version>.<arch>.rpm") | .digest' | sed 's/sha256://')
+echo "${EXPECTED_HASH}  crowdsec-cloudflare-list-bouncer-<version>.<arch>.rpm" | sha256sum -c -
 sudo rpm -Uvh crowdsec-cloudflare-list-bouncer-<version>.<arch>.rpm
 ```
 
@@ -141,6 +154,32 @@ Monitor live service logs:
 
 ```bash
 sudo journalctl -u crowdsec-cloudflare-list-bouncer.service -f
+```
+
+---
+
+### Uninstallation
+
+#### Debian / Ubuntu
+
+Remove the service and binary while preserving configuration files:
+
+```bash
+sudo dpkg -r crowdsec-cloudflare-list-bouncer
+```
+
+Purge the package and remove all configuration files:
+
+```bash
+sudo dpkg -P crowdsec-cloudflare-list-bouncer
+```
+
+#### RHEL / Fedora / AlmaLinux
+
+Remove the package:
+
+```bash
+sudo rpm -e crowdsec-cloudflare-list-bouncer
 ```
 
 </details>

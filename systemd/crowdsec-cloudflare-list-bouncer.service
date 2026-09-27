@@ -7,8 +7,8 @@ Documentation=https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer
 [Service]
 Type=simple
 EnvironmentFile=-/etc/default/crowdsec-cloudflare-list-bouncer
-ExecStartPre=/usr/local/bin/crowdsec-cloudflare-list-bouncer -c /etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml -t
-ExecStart=/usr/local/bin/crowdsec-cloudflare-list-bouncer -c /etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml
+ExecStartPre=/usr/bin/crowdsec-cloudflare-list-bouncer -c /etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml -t
+ExecStart=/usr/bin/crowdsec-cloudflare-list-bouncer -c /etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml
 Restart=on-failure
 RestartSec=10s
 
