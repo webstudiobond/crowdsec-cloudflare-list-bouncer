@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build and Release
+  build:
+    name: Build and Package
     runs-on: ubuntu-latest
 
     steps:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Build and Package
         run: |
-          mkdir -p release_assets
+          mkdir -p release_archives release_packages
           VERSION="${GITHUB_REF_NAME#v}"
 
           for arch in amd64 arm64; do
@@ -44,36 +44,33 @@ jobs:
             cp README.md "build_linux_${arch}/"
 
             cd "build_linux_${arch}"
-            tar -czvf "../release_assets/crowdsec-cloudflare-list-bouncer_${VERSION}_linux_${arch}.tar.gz" ./*
+            tar -czvf "../release_archives/crowdsec-cloudflare-list-bouncer_${VERSION}_linux_${arch}.tar.gz" ./*
             cd ..
 
             # Stage binary at repository root for nfpm packaging
             cp "build_linux_${arch}/crowdsec-cloudflare-list-bouncer" ./crowdsec-cloudflare-list-bouncer
-            ARCH=${arch} VERSION=${VERSION} nfpm package --packager deb --target release_assets/
-            ARCH=${arch} VERSION=${VERSION} nfpm package --packager rpm --target release_assets/
+            ARCH=${arch} VERSION=${VERSION} nfpm package --packager deb --target release_packages/
+            ARCH=${arch} VERSION=${VERSION} nfpm package --packager rpm --target release_packages/
             rm -f ./crowdsec-cloudflare-list-bouncer
           done
 
-      - name: Publish Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+      - name: Upload Archive Artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          generate_release_notes: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
-          files: release_assets/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: archive-assets
+          path: release_archives/*
 
       - name: Upload Package Artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: package-assets
           path: |
-            release_assets/*.deb
-            release_assets/*.rpm
+            release_packages/*.deb
+            release_packages/*.rpm
 
   sign:
     name: Sign Packages and Repositories
-    needs: release
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -112,9 +109,49 @@ jobs:
           name: signed-repositories
           path: signed_repo/
 
+      - name: Stage Verified Packages
+        run: |
+          mkdir -p verified_packages
+          find signed_repo/deb/pool/main -type f -name "*.deb" -exec cp {} verified_packages/ \;
+          find signed_repo/rpm -maxdepth 1 -type f -name "*.rpm" -exec cp {} verified_packages/ \;
+
+      - name: Upload Verified Packages Artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verified-packages
+          path: verified_packages/*
+
+  release:
+    name: Publish Release
+    needs: [build, sign]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Archive Artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: archive-assets
+          path: final_release_assets
+
+      - name: Download Verified Packages Artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: verified-packages
+          path: final_release_assets
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: final_release_assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   pages:
     name: Deploy to GitHub Pages
-    needs: sign
+    needs: [sign, release]
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -80,3 +80,24 @@ jobs:
           scan-ref: '.'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
+
+  docker-lint:
+    name: Docker Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Lint Dockerfile with hadolint
+        run: docker run --rm -i hadolint/hadolint < ./docker/Dockerfile || true
+
+      - name: Prepare mock environment for Compose validation
+        run: |
+          cp docker/.env.example docker/.env
+          mkdir -p docker/secrets
+          for s in cs_lapi_key cf_api_token cf_account_id cf_ban_list_id; do
+            touch "docker/secrets/${s}.txt"
+          done
+
+      - name: Validate Docker Compose files
+        run: |
+          docker compose -f ./docker/docker-compose.yaml config -q

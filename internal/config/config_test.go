@@ -341,3 +341,81 @@ cf_list_id: yml_list
 		t.Fatalf("expected error for syntax error in target, got nil")
 	}
 }
+
+func TestSecretFileSupport(t *testing.T) {
+	tempDir := t.TempDir()
+	targetsDir := filepath.Join(tempDir, "secret-targets")
+	if err := os.Mkdir(targetsDir, 0o700); err != nil {
+		t.Fatalf("failed to create targets dir: %v", err)
+	}
+
+	keyFile := filepath.Join(tempDir, "lapi_key.txt")
+	if err := os.WriteFile(keyFile, []byte("  secret_lapi_key_from_file\n\n"), 0o600); err != nil {
+		t.Fatalf("failed to write key file: %v", err)
+	}
+
+	tokenFile := filepath.Join(tempDir, "cf_token.txt")
+	if err := os.WriteFile(tokenFile, []byte("cf_token_from_file\r\n"), 0o600); err != nil {
+		t.Fatalf("failed to write token file: %v", err)
+	}
+
+	accFile := filepath.Join(tempDir, "cf_acc.txt")
+	if err := os.WriteFile(accFile, []byte("cf_acc_from_file\n"), 0o600); err != nil {
+		t.Fatalf("failed to write acc file: %v", err)
+	}
+
+	listFile := filepath.Join(tempDir, "cf_list.txt")
+	if err := os.WriteFile(listFile, []byte("cf_list_from_file"), 0o600); err != nil {
+		t.Fatalf("failed to write list file: %v", err)
+	}
+
+	targetContent := `
+cf_api_token: ${CF_API_TOKEN}
+cf_account_id: ${CF_ACCOUNT_ID}
+cf_list_id: ${CF_BAN_LIST_ID}
+`
+	if err := os.WriteFile(filepath.Join(targetsDir, "secret_target.yaml"), []byte(targetContent), 0o600); err != nil {
+		t.Fatalf("failed to write target: %v", err)
+	}
+
+	mainContent := `
+api_url: http://127.0.0.1:8080/
+api_key: ${CS_LAPI_KEY}
+targets_dir: ` + targetsDir + `
+`
+	mainConfigFile := filepath.Join(tempDir, "secret_config.yaml")
+	if err := os.WriteFile(mainConfigFile, []byte(mainContent), 0o600); err != nil {
+		t.Fatalf("failed to write main config: %v", err)
+	}
+
+	t.Setenv("CS_LAPI_KEY_FILE", keyFile)
+	t.Setenv("CF_API_TOKEN_FILE", tokenFile)
+	t.Setenv("CF_ACCOUNT_ID_FILE", accFile)
+	t.Setenv("CF_BAN_LIST_ID_FILE", listFile)
+
+	cfg, err := config.Load(mainConfigFile)
+	if err != nil {
+		t.Fatalf("unexpected Load error with secret files: %v", err)
+	}
+
+	if cfg.APIKey != "secret_lapi_key_from_file" {
+		t.Errorf("APIKey = %q, want secret_lapi_key_from_file", cfg.APIKey)
+	}
+	if len(cfg.Targets) != 1 {
+		t.Fatalf("expected 1 target, got %d", len(cfg.Targets))
+	}
+	if cfg.Targets[0].CFApiToken != "cf_token_from_file" {
+		t.Errorf("CFApiToken = %q, want cf_token_from_file", cfg.Targets[0].CFApiToken)
+	}
+	if cfg.Targets[0].CFAccountID != "cf_acc_from_file" {
+		t.Errorf("CFAccountID = %q, want cf_acc_from_file", cfg.Targets[0].CFAccountID)
+	}
+	if cfg.Targets[0].CFListID != "cf_list_from_file" {
+		t.Errorf("CFListID = %q, want cf_list_from_file", cfg.Targets[0].CFListID)
+	}
+
+	t.Setenv("CS_LAPI_KEY_FILE", filepath.Join(tempDir, "nonexistent.txt"))
+	if _, err := config.Load(mainConfigFile); err == nil {
+		t.Errorf("expected error when secret file does not exist, got nil")
+	}
+}

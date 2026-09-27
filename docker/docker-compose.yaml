@@ -1,0 +1,53 @@
+services:
+  crowdsec-cloudflare-list-bouncer:
+    image: ghcr.io/webstudiobond/crowdsec-cloudflare-list-bouncer:latest
+    container_name: crowdsec-cloudflare-list-bouncer
+    hostname: crowdsec-cloudflare-list-bouncer
+    restart: unless-stopped
+    user: "${APP_UID:-10001}:${APP_GID:-10001}"
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add: []
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 64m
+    cpus: 0.5
+    pids_limit: 50
+    tmpfs:
+      - /tmp:size=10M,noexec,nosuid,nodev
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - CS_LAPI_KEY_FILE=/run/secrets/cs_lapi_key
+      - CF_API_TOKEN_FILE=/run/secrets/cf_api_token
+      - CF_ACCOUNT_ID_FILE=/run/secrets/cf_account_id
+      - CF_BAN_LIST_ID_FILE=/run/secrets/cf_ban_list_id
+    secrets:
+      - cs_lapi_key
+      - cf_api_token
+      - cf_account_id
+      - cf_ban_list_id
+    volumes:
+      - ./config/crowdsec-cloudflare-list-bouncer.yaml:/etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml:ro
+      - ./config/cloudflare-list-targets.d:/etc/crowdsec/bouncers/cloudflare-list-targets.d:ro
+      - /etc/localtime:/etc/localtime:ro
+    extra_hosts:
+      # Allows reaching CrowdSec LAPI on the host system when it listens on 0.0.0.0 or bridge interface
+      - "host.docker.internal:host-gateway"
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+secrets:
+  cs_lapi_key:
+    file: ./secrets/cs_lapi_key.txt
+  cf_api_token:
+    file: ./secrets/cf_api_token.txt
+  cf_account_id:
+    file: ./secrets/cf_account_id.txt
+  cf_ban_list_id:
+    file: ./secrets/cf_ban_list_id.txt

@@ -216,6 +216,120 @@ sudo rpm -e crowdsec-cloudflare-list-bouncer
 ---
 
 <details>
+<summary><strong>Docker deployment & Setup</strong></summary>
+
+## Docker Compose
+
+Deploy the bouncer in a rootless, hardened container with a dedicated system user and Docker Secrets for secure credential storage.
+
+### 1. Create System User and Group
+
+```bash
+APP_USER=crowdsec-bouncer
+APP_UID=10001
+APP_GID=10001
+
+getent passwd ${APP_UID}
+getent group ${APP_GID}
+```
+
+If neither command produces output, create the system group and user with a disabled login shell:
+
+```bash
+sudo groupadd -g ${APP_GID} ${APP_USER}
+sudo useradd -m -d /home/${APP_USER} -s /usr/sbin/nologin -u ${APP_UID} -g ${APP_GID} ${APP_USER}
+```
+
+### 2. Create Directory Structure
+
+```bash
+sudo -u ${APP_USER} mkdir -p /home/${APP_USER}/{config/cloudflare-list-targets.d,secrets}
+```
+
+### 3. Download Configuration and Compose Files
+
+```bash
+REPO="https://raw.githubusercontent.com/webstudiobond/crowdsec-cloudflare-list-bouncer/main"
+
+sudo -u ${APP_USER} curl -fsSL ${REPO}/docker/docker-compose.yaml -o /home/${APP_USER}/docker-compose.yaml
+sudo -u ${APP_USER} curl -fsSL ${REPO}/docker/.env.example -o /home/${APP_USER}/.env
+sudo -u ${APP_USER} curl -fsSL ${REPO}/config/crowdsec-cloudflare-list-bouncer.yaml -o /home/${APP_USER}/config/crowdsec-cloudflare-list-bouncer.yaml
+sudo -u ${APP_USER} curl -fsSL ${REPO}/config/cloudflare-list-targets.d/example.yaml -o /home/${APP_USER}/config/cloudflare-list-targets.d/main.yaml
+```
+
+### 4. Store Secrets via Docker Secrets
+
+Generate a CrowdSec LAPI key and create each secret file using an interactive editor (do not use shell echo commands to avoid storing credentials in shell history):
+
+```bash
+sudo cscli bouncers add cloudflare-list-bouncer
+```
+
+Paste each credential into its corresponding file:
+
+```bash
+sudo -u ${APP_USER} nano /home/${APP_USER}/secrets/cs_lapi_key.txt
+sudo -u ${APP_USER} nano /home/${APP_USER}/secrets/cf_api_token.txt
+sudo -u ${APP_USER} nano /home/${APP_USER}/secrets/cf_account_id.txt
+sudo -u ${APP_USER} nano /home/${APP_USER}/secrets/cf_ban_list_id.txt
+```
+
+### 5. Set Secure File Permissions
+
+Restrict file permissions so only the bouncer service user can access configuration files and secrets:
+
+```bash
+sudo chmod 0700 /home/${APP_USER}
+sudo chmod 0700 /home/${APP_USER}/config /home/${APP_USER}/config/cloudflare-list-targets.d /home/${APP_USER}/secrets
+sudo chmod 0600 /home/${APP_USER}/docker-compose.yaml
+sudo chmod 0644 /home/${APP_USER}/.env
+sudo chmod 0400 /home/${APP_USER}/config/crowdsec-cloudflare-list-bouncer.yaml
+sudo chmod 0400 /home/${APP_USER}/config/cloudflare-list-targets.d/main.yaml
+sudo chmod 0400 /home/${APP_USER}/secrets/*.txt
+```
+
+### 6. Configure Network and CrowdSec Connection
+
+Adjust `CS_LAPI_URL` in `/home/${APP_USER}/.env` based on your architecture:
+
+* **Scenario A — CrowdSec on Host (systemd) listening on default `127.0.0.1:8080`:**
+  Because `127.0.0.1` is strictly bound to the host loopback interface, bridge containers cannot route to it directly. Add `network_mode: host` to `docker-compose.yaml` (and remove `extra_hosts`), then set in `.env`:
+  ```bash
+  CS_LAPI_URL=http://127.0.0.1:8080/
+  ```
+* **Scenario B — CrowdSec on Host listening on `0.0.0.0:8080` or Docker bridge gateway:**
+  Keep the default bridge network with `extra_hosts` in `docker-compose.yaml`, then set in `.env`:
+  ```bash
+  CS_LAPI_URL=http://host.docker.internal:8080/
+  ```
+* **Scenario C — CrowdSec running in Docker on the same host:**
+  Attach the bouncer service to CrowdSec's Docker network (e.g., `networks: [crowdsec-net]`), then set in `.env`:
+  ```bash
+  CS_LAPI_URL=http://crowdsec:8080/
+  ```
+* **Scenario D — Remote CrowdSec LAPI:**
+  Set the remote URL directly in `.env`:
+  ```bash
+  CS_LAPI_URL=https://crowdsec.example.com:8080/
+  ```
+
+### 7. Start the Bouncer
+
+```bash
+sudo docker compose -f /home/${APP_USER}/docker-compose.yaml up -d
+```
+
+To view logs:
+
+```bash
+sudo docker compose -f /home/${APP_USER}/docker-compose.yaml logs -f
+```
+
+</details>
+
+---
+
+<details>
 <summary><strong>Cloudflare WAF Rule Configuration</strong></summary>
 
 Create a WAF Custom Rule in your zone (**Security** > **WAF** > **Custom rules**):

@@ -284,10 +284,10 @@ func applyTargetList(target *TargetConfig, key string, list []string) error {
 }
 
 func applyMainEnvOverrides(cfg *MainConfig) {
-	if val := os.Getenv("CS_LAPI_URL"); val != "" {
+	if val, exists, err := getEnvOrSecretFile("CS_LAPI_URL"); err == nil && exists && val != "" {
 		cfg.APIURL = ensureTrailingSlash(val)
 	}
-	if val := os.Getenv("CS_LAPI_KEY"); val != "" {
+	if val, exists, err := getEnvOrSecretFile("CS_LAPI_KEY"); err == nil && exists && val != "" {
 		cfg.APIKey = val
 	}
 	if val := os.Getenv("POLL_INTERVAL"); val != "" {
@@ -330,6 +330,21 @@ func ensureTrailingSlash(url string) string {
 	return url
 }
 
+func getEnvOrSecretFile(varName string) (val string, exists bool, err error) {
+	if val, exists := os.LookupEnv(varName); exists && val != "" {
+		return val, true, nil
+	}
+	fileVar := varName + "_FILE"
+	if filePath, exists := os.LookupEnv(fileVar); exists && filePath != "" {
+		data, err := os.ReadFile(filepath.Clean(filePath))
+		if err != nil {
+			return "", false, fmt.Errorf("read secret file %q for %s: %w", filePath, fileVar, err)
+		}
+		return strings.TrimSpace(string(data)), true, nil
+	}
+	return "", false, nil
+}
+
 func expandEnv(raw string) (string, error) {
 	if !strings.Contains(raw, "${") {
 		return raw, nil
@@ -348,7 +363,10 @@ func expandEnv(raw string) (string, error) {
 		end += start
 
 		varName := result[start+2 : end]
-		envVal, exists := os.LookupEnv(varName)
+		envVal, exists, err := getEnvOrSecretFile(varName)
+		if err != nil {
+			return "", fmt.Errorf("%w: %w", ErrInvalidValue, err)
+		}
 		if !exists || envVal == "" {
 			return "", fmt.Errorf("%w: %q", ErrUnsetEnvironmentVariable, varName)
 		}
