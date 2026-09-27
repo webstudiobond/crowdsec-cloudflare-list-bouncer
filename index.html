@@ -469,7 +469,7 @@
           </a>
           <a
             class="icon-btn"
-            href="webstudiobond.gpg"
+            href="webstudiobond.asc"
             download
             data-tooltip="Download GPG Key"
             aria-label="Download GPG Key"
@@ -639,7 +639,7 @@
               </button>
             </div>
             <pre
-            ><code>curl -fsSL https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/webstudiobond.gpg | sudo tee /etc/apt/keyrings/webstudiobond.gpg > /dev/null</code></pre>
+            ><code>curl -fsSL https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/webstudiobond.asc | sudo tee /etc/apt/keyrings/webstudiobond.asc > /dev/null</code></pre>
           </div>
         </div>
         <div class="step">
@@ -699,7 +699,7 @@
               </button>
             </div>
             <pre
-            ><code>echo "deb [signed-by=/etc/apt/keyrings/webstudiobond.gpg] https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/deb stable main" | sudo tee /etc/apt/sources.list.d/crowdsec-cloudflare-list-bouncer.list</code></pre>
+            ><code>echo "deb [signed-by=/etc/apt/keyrings/webstudiobond.asc] https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/deb stable main" | sudo tee /etc/apt/sources.list.d/crowdsec-cloudflare-list-bouncer.list</code></pre>
           </div>
         </div>
         <div class="step">
@@ -890,7 +890,7 @@ baseurl=https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/rpm/
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
-gpgkey=https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/webstudiobond.gpg
+gpgkey=https://webstudiobond.github.io/crowdsec-cloudflare-list-bouncer/webstudiobond.asc
 EOF</code></pre>
           </div>
         </div>
