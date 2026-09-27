@@ -103,7 +103,7 @@ jobs:
               set -e
               apt-get update -qq
               apt-get install -y -qq --no-install-recommends dpkg-dev apt-utils createrepo-c gnupg gzip
-              /workspace/scripts/generate-repo.sh /workspace/release_packages /workspace/signed_repo /workspace/gh-pages-branch
+              bash /workspace/scripts/generate-repo.sh /workspace/release_packages /workspace/signed_repo /workspace/gh-pages-branch
             '
 
       - name: Upload Signed Repositories
