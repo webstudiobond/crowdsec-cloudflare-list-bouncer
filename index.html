@@ -11,6 +11,30 @@
       name="description"
       content="Official APT and RPM package repository for crowdsec-cloudflare-list-bouncer."
     >
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests;"
+    >
+    <meta
+      name="referrer"
+      content="strict-origin-when-cross-origin"
+    >
+    <meta
+      http-equiv="X-Content-Type-Options"
+      content="nosniff"
+    >
+    <meta
+      http-equiv="x-dns-prefetch-control"
+      content="off"
+    >
+    <meta
+      name="color-scheme"
+      content="dark"
+    >
+    <meta
+      name="theme-color"
+      content="#0d1117"
+    >
     <style>
     :root {
       --bg: #0d1117;
@@ -52,7 +76,7 @@
       width: 100%;
       padding: 10px 20px;
       background-color: var(--bg);
-      border-bottom: 1px solid var(--border-muted);
+      border-bottom: 1px solid #363533;
     }
 
     .header-container {
@@ -101,7 +125,7 @@
       text-decoration: none;
       cursor: pointer;
       background-color: var(--btn-bg);
-      border: 1px solid var(--border);
+      border: 1px solid #363533;
       border-radius: 6px;
       transition:
         background-color 0.15s ease,
@@ -194,7 +218,7 @@
       padding: 20px 18px;
       margin-bottom: 24px;
       background-color: var(--card-bg);
-      border: 1px solid var(--border);
+      border: 1px solid #363533;
       border-radius: 8px;
     }
 
@@ -244,7 +268,7 @@
     .code-block {
       overflow: hidden;
       background-color: var(--code-bg);
-      border: 1px solid var(--code-border);
+      border: 1px solid #363533;
       border-radius: 6px;
     }
 
@@ -256,7 +280,7 @@
       font-size: 0.75rem;
       color: var(--text-muted);
       background-color: var(--code-header-bg);
-      border-bottom: 1px solid var(--code-border);
+      border-bottom: 1px solid #363533;
     }
 
     @supports (user-select: none) {
@@ -289,7 +313,7 @@
       color: var(--text-muted);
       cursor: pointer;
       background-color: var(--btn-bg);
-      border: 1px solid var(--border);
+      border: 1px solid #363533;
       border-radius: 4px;
       transition: all 0.15s ease;
     }
@@ -369,7 +393,7 @@
       font-size: 0.8rem;
       color: var(--text-muted);
       text-align: center;
-      border-top: 1px solid var(--border-muted);
+      border-top: 1px solid #363533;
     }
 
     a {
