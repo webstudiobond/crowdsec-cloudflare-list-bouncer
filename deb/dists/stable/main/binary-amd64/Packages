@@ -1,0 +1,15 @@
+Package: crowdsec-cloudflare-list-bouncer
+Version: 0.3.0
+Architecture: amd64
+Maintainer: underhax <https://github.com/underhax>
+Installed-Size: 6800
+Filename: pool/main/crowdsec-cloudflare-list-bouncer_0.3.0_amd64.deb
+Size: 2978558
+MD5sum: fade2ba82e1b46f1ba8994023d847161
+SHA1: a987d1466892713221e94686f41cb78e85e64ccf
+SHA256: a043e6b674de7f42e11659b737a20170ae41555b52f6d2ccf859ebcaf2724f9d
+Section: net
+Priority: optional
+Homepage: https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer
+Description: CrowdSec bouncer syncing LAPI decisions to Cloudflare IP Lists
+

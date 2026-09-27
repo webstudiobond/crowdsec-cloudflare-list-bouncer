@@ -1,0 +1,42 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Architectures: amd64 arm64
+Codename: stable
+Components: main
+Date: Sun, 27 Sep 2026 18:27:01 +0000
+Description: CrowdSec Cloudflare List Bouncer APT Repository
+Label: crowdsec-cloudflare-list-bouncer
+Origin: webstudiobond
+Suite: stable
+MD5Sum:
+ 1d0dad91e7de52a9d96466d356cc908a              236 Release
+ 35163ccf4fe4acce1f87c7420bcd8a49              578 main/binary-amd64/Packages
+ 047a0febbacbcc67575ecf0f856ba849              387 main/binary-amd64/Packages.gz
+ a00c0cf6107baf9cac3ec387e5e73179              578 main/binary-arm64/Packages
+ 11f6f5e3a26f61c17aa06a24b2bce4fa              385 main/binary-arm64/Packages.gz
+SHA1:
+ 4e01bf4c657255c4ee3ea876e2f2292f6dbf338e              236 Release
+ 8e799df94a74c2842e94f9f5e37613e840d8bfdd              578 main/binary-amd64/Packages
+ 511a3ff825e19e6911bce973d807b1dc1bc70b59              387 main/binary-amd64/Packages.gz
+ 77bb18ba4ce73893631b9f5a17471b61d06ee248              578 main/binary-arm64/Packages
+ 399363e7c1eb04086db41285bdab67a26c9d4ed9              385 main/binary-arm64/Packages.gz
+SHA256:
+ 4a1ed406b0de4a972c30606fbb253b1592fef4daf7f0fd03c093af41b674e048              236 Release
+ f5c2a2049caf569e0a354ef18c52ae41247a377781d175778a13733f1a8333db              578 main/binary-amd64/Packages
+ 8d41e8a5b0ab051e897fcebb9aa479c5ae90837c307e646f877cfc4e80693fdf              387 main/binary-amd64/Packages.gz
+ 90dad30096760eb344f2e15e2e7414e545d3e2a7adca49d35f063b014a1849e0              578 main/binary-arm64/Packages
+ e14a333e44f6d60110fbe9fa2fe9ae4fec0bfc118c0c907974d1447170473784              385 main/binary-arm64/Packages.gz
+SHA512:
+ a5ed622191b52c7272e1b01bc8bafcb0c543b1a7d11b1932238a74c89651ce64b2e70d5be0acb35d4171d2606af7bbca274c0d4c7d837f423f938f5905dea78d              236 Release
+ 0d2e278ed907d9e2b155aed166e3a51479d603854fe55377a9e625212a50528444ec2bcf9c352cf5c164d219c5df001ab3b32a79d8fa80c752b4760bbf3fb6a1              578 main/binary-amd64/Packages
+ f21195cabe1a22785c7e5fdc9f3018f23fca659b4b5a524a0d373321eddcde802639160caf7f07d7573f7f6f42a42ac72a7d1b994de715bfe328e4e8379a51b3              387 main/binary-amd64/Packages.gz
+ 7ffb401cd82cb2234da35bb831d30ee90dd7c62c07da19bbceb74dd42699190c343245cea52fcc2e1fc405c7f83b2b4511a87ec855906fbbb909e3fd6ff8f431              578 main/binary-arm64/Packages
+ e508eedc54284eefd44fb7bd47da90bce4086ef0d81bbc14c5c7ea2bcddffc269fc1e9b5995fe540ea00e6471b94ceab5e19815cbd08adf99e015c573069d682              385 main/binary-arm64/Packages.gz
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYKAB0WIQTdvf3Q/IoTXMsd4ynOHLShnRVv8gUCarlf9QAKCRDOHLShnRVv
+8nshAP4592X2G3Ri/th8wB2TxFn6c7bnEYRQirAObCmFskn6igEA376uFLNv0PG9
+wMtbVs4gF1XDapwaUXhI8Lck/AMEkQE=
+=K6O7
+-----END PGP SIGNATURE-----
