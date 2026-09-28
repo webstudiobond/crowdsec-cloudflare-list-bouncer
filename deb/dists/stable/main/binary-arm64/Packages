@@ -1,13 +1,13 @@
 Package: crowdsec-cloudflare-list-bouncer
-Version: 0.3.2
+Version: 0.3.3
 Architecture: arm64
 Maintainer: underhax <https://github.com/underhax>
 Installed-Size: 6276
-Filename: pool/main/crowdsec-cloudflare-list-bouncer_0.3.2_arm64.deb
-Size: 2690932
-MD5sum: 9d6dac975e581ed63b9fa3ddd58a3c01
-SHA1: e8f379aa3a907dfba953491f8917e7c9b59fd942
-SHA256: e5bdb466d38d975464b898adc2023f0e68e7eff4ebd5fd799b7cc0d523fc717c
+Filename: pool/main/crowdsec-cloudflare-list-bouncer_0.3.3_arm64.deb
+Size: 2691116
+MD5sum: 846069096bb056c22f80ef4ed78d0ca0
+SHA1: 1133b4022c4fac6316fada11e53963840515496c
+SHA256: 1a3b378df8b4a0ae705a539436ee3c2351657ef588b8ce842f98baaa7a4dc0b0
 Section: net
 Priority: optional
 Homepage: https://github.com/webstudiobond/crowdsec-cloudflare-list-bouncer
