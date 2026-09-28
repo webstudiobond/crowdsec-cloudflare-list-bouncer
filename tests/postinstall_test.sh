@@ -53,7 +53,7 @@ test_postinstall_trace_enabled() {
   assert_successful_code
 }
 
-test_postinstall_configure_service_active_enabled() {
+test_postinstall_configure_service_fresh_install_enabled() {
   (
     check_systemd_active() {
       printf "yes"
@@ -68,14 +68,14 @@ test_postinstall_configure_service_active_enabled() {
         ;;
       esac
     }
-    configure_service
+    configure_service ""
     check_systemd_active >/dev/null
     systemctl is-enabled >/dev/null 2>&1
   )
   assert_successful_code
 }
 
-test_postinstall_configure_service_active_disabled() {
+test_postinstall_configure_service_fresh_install_disabled() {
   (
     check_systemd_active() {
       printf "yes"
@@ -90,9 +90,90 @@ test_postinstall_configure_service_active_disabled() {
         ;;
       esac
     }
-    configure_service
+    configure_service ""
     check_systemd_active >/dev/null
     systemctl daemon-reload >/dev/null 2>&1
+  )
+  assert_successful_code
+}
+
+test_postinstall_configure_service_upgrade_restarts() {
+  (
+    check_systemd_active() {
+      printf "yes"
+    }
+    systemctl() {
+      case "$1" in
+      is-enabled)
+        printf "enabled"
+        ;;
+      restart)
+        printf "restart-called"
+        ;;
+      *)
+        return 0
+        ;;
+      esac
+    }
+    configure_service "1.0.0"
+    check_systemd_active >/dev/null
+    systemctl is-enabled >/dev/null 2>&1
+  )
+  assert_successful_code
+}
+
+test_postinstall_rpm_fresh_install() {
+  (
+    check_systemd_active() {
+      printf "yes"
+    }
+    systemctl() {
+      return 0
+    }
+    main 1
+    check_systemd_active >/dev/null
+    systemctl >/dev/null 2>&1
+  )
+  assert_successful_code
+}
+
+test_postinstall_rpm_upgrade() {
+  (
+    check_systemd_active() {
+      printf "yes"
+    }
+    systemctl() {
+      return 0
+    }
+    main 2
+    check_systemd_active >/dev/null
+    systemctl >/dev/null 2>&1
+  )
+  assert_successful_code
+}
+
+test_postinstall_configure_service_upgrade_with_configure_and_version() {
+  (
+    check_systemd_active() {
+      printf "yes"
+    }
+    systemctl() {
+      return 0
+    }
+    main configure 1.0.0
+    check_systemd_active >/dev/null
+    systemctl >/dev/null 2>&1
+  )
+  assert_successful_code
+}
+
+test_postinstall_configure_service_systemd_inactive() {
+  (
+    check_systemd_active() {
+      printf "no"
+    }
+    configure_service "1.0.0"
+    check_systemd_active >/dev/null
   )
   assert_successful_code
 }

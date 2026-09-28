@@ -12,10 +12,12 @@ die() {
 }
 
 usage() {
-  printf "Usage: %s [OPTIONS]\n" "$0"
+  printf "Usage: %s [OPTIONS] [ACTION] [OLD_VERSION]\n" "$0"
   printf "Post-installation service registration for crowdsec-cloudflare-list-bouncer.\n"
   printf "Options:\n"
   printf "  -h, --help    Display usage instructions\n"
+  printf "Actions:\n"
+  printf "  configure     Register and optionally restart the service\n"
 }
 
 cleanup() {
@@ -30,6 +32,9 @@ check_systemd_active() {
 }
 
 configure_service() {
+  local old_version
+  old_version="${1:-}"
+
   local systemd_state
   systemd_state="$(check_systemd_active)"
   case "${systemd_state}" in
@@ -42,6 +47,13 @@ configure_service() {
       ;;
     *)
       systemctl enable "${SERVICE_NAME}" >/dev/null 2>&1 || true
+      ;;
+    esac
+    case "${old_version}" in
+    ?*)
+      systemctl restart "${SERVICE_NAME}" >/dev/null 2>&1 || true
+      ;;
+    *)
       ;;
     esac
     ;;
@@ -62,20 +74,29 @@ main() {
   local first_arg
   first_arg="${1:-}"
 
+  local second_arg
+  second_arg="${2:-}"
+
   case "${first_arg}" in
   -h | --help)
     usage
     cleanup
     return 0
     ;;
-  "" | configure | [0-9]*)
+  "" | configure)
+    configure_service "${second_arg}"
+    ;;
+  1)
+    configure_service ""
+    ;;
+  [2-9]*)
+    configure_service "${first_arg}"
     ;;
   *)
     die "Invalid argument: ${first_arg}"
     ;;
   esac
 
-  configure_service
   cleanup
   return 0
 }

@@ -12,10 +12,13 @@ die() {
 }
 
 usage() {
-  printf "Usage: %s [OPTIONS]\n" "$0"
+  printf "Usage: %s [OPTIONS] [ACTION]\n" "$0"
   printf "Pre-removal service de-registration for crowdsec-cloudflare-list-bouncer.\n"
   printf "Options:\n"
   printf "  -h, --help    Display usage instructions\n"
+  printf "Actions:\n"
+  printf "  remove        Stop and disable the service\n"
+  printf "  upgrade       Stop the service without disabling\n"
 }
 
 cleanup() {
@@ -27,6 +30,18 @@ check_systemd_active() {
   active="no"
   test -d "${SYSTEMD_RUN_DIR}" && command -v systemctl >/dev/null 2>&1 && active="yes"
   printf "%s" "${active}"
+}
+
+stop_service() {
+  local systemd_state
+  systemd_state="$(check_systemd_active)"
+  case "${systemd_state}" in
+  yes)
+    systemctl is-active --quiet "${SERVICE_NAME}" 2>/dev/null && systemctl stop "${SERVICE_NAME}" >/dev/null 2>&1 || true
+    ;;
+  *)
+    ;;
+  esac
 }
 
 stop_and_disable_service() {
@@ -62,14 +77,23 @@ main() {
     cleanup
     return 0
     ;;
-  "" | remove | upgrade | deconfigure | failed-upgrade | [0-9]*)
+  upgrade)
+    stop_service
+    ;;
+  0)
+    stop_and_disable_service
+    ;;
+  [1-9]*)
+    stop_service
+    ;;
+  "" | remove | deconfigure | failed-upgrade)
+    stop_and_disable_service
     ;;
   *)
     die "Invalid argument: ${first_arg}"
     ;;
   esac
 
-  stop_and_disable_service
   cleanup
   return 0
 }

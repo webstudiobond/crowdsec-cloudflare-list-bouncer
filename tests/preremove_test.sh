@@ -57,7 +57,12 @@ test_preremove_failed_upgrade_argument() {
   assert_successful_code
 }
 
-test_preremove_number_argument() {
+test_preremove_rpm_removal() {
+  (main 0)
+  assert_successful_code
+}
+
+test_preremove_rpm_upgrade() {
   (main 1)
   assert_successful_code
 }
@@ -68,7 +73,7 @@ test_preremove_trace_enabled() {
   assert_successful_code
 }
 
-test_preremove_stop_and_disable_active() {
+test_preremove_stop_and_disable_on_remove() {
   (
     check_systemd_active() {
       printf "yes"
@@ -79,6 +84,43 @@ test_preremove_stop_and_disable_active() {
     stop_and_disable_service
     check_systemd_active >/dev/null
     systemctl >/dev/null 2>&1
+  )
+  assert_successful_code
+}
+
+test_preremove_stop_only_on_upgrade() {
+  (
+    check_systemd_active() {
+      printf "yes"
+    }
+    systemctl() {
+      return 0
+    }
+    stop_service
+    check_systemd_active >/dev/null
+    systemctl >/dev/null 2>&1
+  )
+  assert_successful_code
+}
+
+test_preremove_stop_service_systemd_inactive() {
+  (
+    check_systemd_active() {
+      printf "no"
+    }
+    stop_service
+    check_systemd_active >/dev/null
+  )
+  assert_successful_code
+}
+
+test_preremove_stop_and_disable_systemd_inactive() {
+  (
+    check_systemd_active() {
+      printf "no"
+    }
+    stop_and_disable_service
+    check_systemd_active >/dev/null
   )
   assert_successful_code
 }
