@@ -12,11 +12,29 @@ ExecStart=/usr/bin/crowdsec-cloudflare-list-bouncer -c /etc/crowdsec/bouncers/cr
 Restart=on-failure
 RestartSec=10s
 
-# Security Hardening
+UMask=0077
+CapabilityBoundingSet=
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+ProtectProc=invisible
+ProcSubset=pid
 PrivateTmp=yes
+PrivateDevices=yes
+MemoryDenyWriteExecute=yes
+LockPersonality=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
 ReadOnlyPaths=/etc/crowdsec/bouncers
 
 [Install]
