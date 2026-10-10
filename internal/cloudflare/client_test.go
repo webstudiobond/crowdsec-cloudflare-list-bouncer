@@ -134,21 +134,43 @@ func TestNewClient_DefaultTransportAndSetBaseURL(t *testing.T) {
 	tests := []struct {
 		inputURL string
 		name     string
+		wantURL  string
 	}{
 		{
-			inputURL: "http://127.0.0.1:8080",
+			inputURL: "https://api.example.com/v4",
 			name:     "without trailing slash",
+			wantURL:  "https://api.example.com/v4/accounts/account_1/rules/lists/list_1",
 		},
 		{
-			inputURL: "http://127.0.0.1:8080/",
+			inputURL: "https://api.example.com/v4/",
 			name:     "with trailing slash",
+			wantURL:  "https://api.example.com/v4/accounts/account_1/rules/lists/list_1",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
+
+			var gotURL string
+			mockTransport := roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				gotURL = req.URL.String()
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(`{"success":true,"result":{}}`)),
+					Header:     make(http.Header),
+				}, nil
+			})
+
+			client := cloudflare.NewClient("cf-auth-default", &http.Client{Transport: mockTransport})
 			client.SetBaseURL(tc.inputURL)
+
+			if err := client.TestConnection(context.Background(), "account_1", "list_1"); err != nil {
+				t.Fatalf("TestConnection() unexpected error: %v", err)
+			}
+			if gotURL != tc.wantURL {
+				t.Errorf("request URL = %q, want %q", gotURL, tc.wantURL)
+			}
 		})
 	}
 }
