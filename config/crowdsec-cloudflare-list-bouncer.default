@@ -22,3 +22,7 @@ CF_BAN_LIST_ID="your-cloudflare-ban-list-id-here"
 # CF_SECOND_API_TOKEN="your-second-account-token-here"
 # CF_SECOND_ACCOUNT_ID="your-second-account-id-here"
 # CF_SECOND_BAN_LIST_ID="your-second-ban-list-id-here"
+
+# Optional Tuning:
+# Maximum response body size from CrowdSec LAPI in megabytes (default: 16, min: 16, max: 512)
+# MAX_RESPONSE_BODY_MB=16

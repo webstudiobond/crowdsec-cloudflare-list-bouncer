@@ -35,7 +35,7 @@ func TestStreamDecisions_NewRequestError(t *testing.T) {
 		newRequestWithContext = prev
 	})
 
-	client := NewClient("http://127.0.0.1:8080", "test-lapi-key", "0.0.1", nil)
+	client := NewClient("http://127.0.0.1:8080", "test-lapi-key", "0.0.1", nil, 0, nil)
 	_, err := client.StreamDecisions(context.Background(), false)
 	if err == nil || !strings.Contains(err.Error(), "create stream request") {
 		t.Fatalf("expected create stream request error, got %v", err)
@@ -49,7 +49,7 @@ func TestTestConnection_NewRequestError(t *testing.T) {
 		newRequestWithContext = prev
 	})
 
-	client := NewClient("http://127.0.0.1:8080", "test-lapi-key", "0.0.1", nil)
+	client := NewClient("http://127.0.0.1:8080", "test-lapi-key", "0.0.1", nil, 0, nil)
 	err := client.TestConnection(context.Background())
 	if err == nil || !strings.Contains(err.Error(), "create test request") {
 		t.Fatalf("expected create test request error, got %v", err)

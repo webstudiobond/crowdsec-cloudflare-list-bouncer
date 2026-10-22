@@ -68,11 +68,18 @@ targets_dir: ` + targetsDir + `
 	if cfg.LogType != "json" {
 		t.Errorf("LogType = %q, want json", cfg.LogType)
 	}
+	if cfg.MaxResponseBodyBytes != 16*1024*1024 {
+		t.Errorf("MaxResponseBodyBytes = %d, want %d", cfg.MaxResponseBodyBytes, 16*1024*1024)
+	}
 	if len(cfg.Targets) != 1 {
 		t.Fatalf("expected 1 target, got %d", len(cfg.Targets))
 	}
 
-	target := cfg.Targets[0]
+	assertTargetFields(t, &cfg.Targets[0])
+}
+
+func assertTargetFields(t *testing.T, target *config.TargetConfig) {
+	t.Helper()
 	if target.Name != "target-alpha" {
 		t.Errorf("target Name = %q, want target-alpha", target.Name)
 	}
@@ -113,6 +120,27 @@ poll_interval: invalid_duration
 			name: "invalid log level",
 			mainContent: `
 log_level: verbose_unsupported
+`,
+			wantErr: true,
+		},
+		{
+			name: "invalid max response body mb non-numeric",
+			mainContent: `
+max_response_body_mb: invalid_number
+`,
+			wantErr: true,
+		},
+		{
+			name: "invalid max response body mb below minimum",
+			mainContent: `
+max_response_body_mb: 15
+`,
+			wantErr: true,
+		},
+		{
+			name: "invalid max response body mb above maximum",
+			mainContent: `
+max_response_body_mb: 1024
 `,
 			wantErr: true,
 		},
@@ -417,5 +445,84 @@ targets_dir: ` + targetsDir + `
 	t.Setenv("CS_LAPI_KEY_FILE", filepath.Join(tempDir, "nonexistent.txt"))
 	if _, err := config.Load(mainConfigFile); err == nil {
 		t.Errorf("expected error when secret file does not exist, got nil")
+	}
+}
+
+func TestLoad_MaxResponseBodyMB(t *testing.T) {
+	tempDir := t.TempDir()
+	targetsDir := filepath.Join(tempDir, "cf-targets")
+	if err := os.Mkdir(targetsDir, 0o700); err != nil {
+		t.Fatalf("failed to create targets dir: %v", err)
+	}
+
+	targetContent := `
+name: target-mb
+cf_api_token: dummy_token
+cf_account_id: dummy_acc
+cf_list_id: dummy_list
+`
+	targetFile := filepath.Join(targetsDir, "target.yaml")
+	if err := os.WriteFile(targetFile, []byte(targetContent), 0o600); err != nil {
+		t.Fatalf("failed to write target file: %v", err)
+	}
+
+	tests := []struct {
+		name      string
+		yamlMB    string
+		envMB     string
+		wantBytes int64
+	}{
+		{
+			name:      "default when unset",
+			yamlMB:    "",
+			envMB:     "",
+			wantBytes: 16 * 1024 * 1024,
+		},
+		{
+			name:      "configured in yaml",
+			yamlMB:    "32",
+			envMB:     "",
+			wantBytes: 32 * 1024 * 1024,
+		},
+		{
+			name:      "env overrides yaml",
+			yamlMB:    "32",
+			envMB:     "64",
+			wantBytes: 64 * 1024 * 1024,
+		},
+		{
+			name:      "invalid env ignored keeps yaml",
+			yamlMB:    "32",
+			envMB:     "invalid",
+			wantBytes: 32 * 1024 * 1024,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mainContent := "api_url: http://127.0.0.1:8080\napi_key: dummy_key\ntargets_dir: " + targetsDir + "\n"
+			if tt.yamlMB != "" {
+				mainContent += "max_response_body_mb: " + tt.yamlMB + "\n"
+			}
+			cfgFile := filepath.Join(tempDir, tt.name+".yaml")
+			if err := os.WriteFile(cfgFile, []byte(mainContent), 0o600); err != nil {
+				t.Fatalf("write config file: %v", err)
+			}
+
+			if tt.envMB != "" {
+				t.Setenv("MAX_RESPONSE_BODY_MB", tt.envMB)
+			} else {
+				t.Setenv("MAX_RESPONSE_BODY_MB", "")
+			}
+
+			cfg, err := config.Load(cfgFile)
+			if err != nil {
+				t.Fatalf("unexpected Load error: %v", err)
+			}
+
+			if cfg.MaxResponseBodyBytes != tt.wantBytes {
+				t.Errorf("MaxResponseBodyBytes = %d, want %d", cfg.MaxResponseBodyBytes, tt.wantBytes)
+			}
+		})
 	}
 }

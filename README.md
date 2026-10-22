@@ -18,7 +18,9 @@ Synchronizes [CrowdSec](https://www.crowdsec.net/) LAPI decisions into [Cloudfla
 
 * **Edge Firewall Integration:** Evaluates traffic at line rate with zero latency overhead and zero request quota consumption using Cloudflare Account-level IP Lists and a single WAF rule: `ip.src in $crowdsec`.
 * **Zero External Dependencies:** Built exclusively with the Go standard library, eliminating third-party supply-chain risks and producing a minimal, self-contained static binary.
+* **Server-Side LAPI Filtering:** Pushes decision origin filters directly to CrowdSec LAPI query parameters (`?origins=...`), eliminating redundant network payloads, memory allocations, and parsing overhead.
 * **Multi-Target Routing & Filtering:** Distributes decisions from a single CrowdSec LAPI stream to multiple Cloudflare accounts and lists with granular origin filtering for local and community blocklists.
+* **Bounded Memory Footprint:** Enforces strict stream response size limits (`max_response_body_mb` / `MAX_RESPONSE_BODY_MB`) to protect against memory exhaustion and OOM kills in resource-constrained environments.
 * **Address Validation & Normalization:** Enforces valid CIDR prefix boundaries and automatically normalizes single IPv6 addresses to `/64` subnets.
 * **Rate Limiting & Backoff:** Handles Cloudflare API rate limits, write collisions, and transient errors using exponential backoff with jitter.
 * **Hardened Security Profile:** Enforces strict least-privilege file permissions and full systemd service sandboxing.
@@ -147,7 +149,7 @@ sudo nano /etc/default/crowdsec-cloudflare-list-bouncer
 ```
 
 #### 2. Main Daemon Configuration
-Configure daemon parameters such as `api_url`, `poll_interval`, and logging in `/etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml`. Reference template: [`config/crowdsec-cloudflare-list-bouncer.yaml`](config/crowdsec-cloudflare-list-bouncer.yaml).
+Configure daemon parameters such as `api_url`, `poll_interval`, `max_response_body_mb`, and logging in `/etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml`. Reference template: [`config/crowdsec-cloudflare-list-bouncer.yaml`](config/crowdsec-cloudflare-list-bouncer.yaml).
 
 ```bash
 sudo nano /etc/crowdsec/bouncers/crowdsec-cloudflare-list-bouncer.yaml
@@ -312,6 +314,8 @@ Adjust `CS_LAPI_URL` in `/home/${APP_USER}/.env` based on your architecture:
   ```bash
   CS_LAPI_URL=https://crowdsec.example.com:8080/
   ```
+* **Optional Tuning (`MAX_RESPONSE_BODY_MB`):**
+  If syncing very large decision sets (e.g., CAPI or custom blocklists with 100k+ entries), configure `MAX_RESPONSE_BODY_MB` in `.env` (default: `16`, min: `16`, max: `512`). If increased, adjust `mem_limit` in `docker-compose.yaml` accordingly.
 
 ### 7. Start the Bouncer
 

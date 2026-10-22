@@ -5,3 +5,7 @@ poll_interval: 10s
 log_level: info
 log_type: text
 targets_dir: /etc/crowdsec/bouncers/cloudflare-list-targets.d/
+
+# Maximum response body size from CrowdSec LAPI in megabytes (optional, default: 16, min: 16, max: 512).
+# Increase this value if you synchronize very large decision lists (e.g. CAPI with 100k+ entries).
+# max_response_body_mb: 16

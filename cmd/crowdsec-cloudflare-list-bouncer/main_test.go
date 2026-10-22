@@ -199,7 +199,7 @@ func TestRun(t *testing.T) {
 		newBouncer = origBouncer
 	}()
 
-	newCrowdSecClient = func(string, string, string, *http.Client) crowdsecChecker {
+	newCrowdSecClient = func(string, string, string, []string, int64, *http.Client) crowdsecChecker {
 		return &mockCrowdSecClient{}
 	}
 	newCloudflareClient = func(string, *http.Client) cloudflareChecker {
@@ -372,7 +372,7 @@ func TestRunTestMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			newCrowdSecClient = func(string, string, string, *http.Client) crowdsecChecker {
+			newCrowdSecClient = func(string, string, string, []string, int64, *http.Client) crowdsecChecker {
 				return &mockCrowdSecClient{testConnErr: tt.csErr}
 			}
 			newCloudflareClient = func(string, *http.Client) cloudflareChecker {
@@ -400,7 +400,7 @@ func TestRunDaemon(t *testing.T) {
 		newBouncer = origBouncer
 	}()
 
-	newCrowdSecClient = func(string, string, string, *http.Client) crowdsecChecker {
+	newCrowdSecClient = func(string, string, string, []string, int64, *http.Client) crowdsecChecker {
 		return &mockCrowdSecClient{}
 	}
 	newCloudflareClient = func(string, *http.Client) cloudflareChecker {
@@ -451,7 +451,7 @@ func TestRunDaemon(t *testing.T) {
 }
 
 func TestDefaultFactories(t *testing.T) {
-	cs := defaultNewCrowdSecClient("http://127.0.0.1:8080/", "test-key", "dev", nil)
+	cs := defaultNewCrowdSecClient("http://127.0.0.1:8080/", "test-key", "dev", nil, 0, nil)
 	if cs == nil {
 		t.Fatal("expected non-nil crowdsec client")
 	}
@@ -468,5 +468,103 @@ func TestDefaultFactories(t *testing.T) {
 	b := defaultNewBouncer(cfg, nil, nil, logger)
 	if b == nil {
 		t.Fatal("expected non-nil bouncer")
+	}
+}
+
+func TestCollectTargetOrigins(t *testing.T) {
+	tests := []struct {
+		name    string
+		targets []config.TargetConfig
+		want    []string
+	}{
+		{
+			name:    "empty targets",
+			targets: nil,
+			want:    nil,
+		},
+		{
+			name: "targets without origins",
+			targets: []config.TargetConfig{
+				{AllowedOrigins: []string{}},
+				{AllowedOrigins: []string{"   ", ""}},
+			},
+			want: nil,
+		},
+		{
+			name: "single target sorted",
+			targets: []config.TargetConfig{
+				{AllowedOrigins: []string{"src-b", "src-a"}},
+			},
+			want: []string{"src-a", "src-b"},
+		},
+		{
+			name: "multiple targets deduplicated and trimmed",
+			targets: []config.TargetConfig{
+				{AllowedOrigins: []string{"trim-space", "dup-origin"}},
+				{AllowedOrigins: []string{"  trim-space  ", "unique-origin"}},
+			},
+			want: []string{"dup-origin", "trim-space", "unique-origin"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := collectTargetOrigins(tt.targets)
+			if len(got) != len(tt.want) {
+				t.Fatalf("collectTargetOrigins() len = %d, want %d (%v vs %v)", len(got), len(tt.want), got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("origin[%d] = %q, want %q", i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+func TestRunDaemon_PassesTargetOriginsAndLimit(t *testing.T) {
+	origCS := newCrowdSecClient
+	origBouncer := newBouncer
+	defer func() {
+		newCrowdSecClient = origCS
+		newBouncer = origBouncer
+	}()
+
+	var passedOrigins []string
+	var passedLimit int64
+	newCrowdSecClient = func(_, _, _ string, origins []string, maxBody int64, _ *http.Client) crowdsecChecker {
+		passedOrigins = origins
+		passedLimit = maxBody
+		return &mockCrowdSecClient{}
+	}
+	newBouncer = func(_ *config.MainConfig, _ bouncer.CrowdSecStreamer, _ func(token string) bouncer.CloudflareListManager, _ *slog.Logger) daemonRunner {
+		return &mockDaemonRunnerWithFactory{}
+	}
+
+	cfg := &config.MainConfig{
+		MaxResponseBodyBytes: 32 * 1024 * 1024,
+		Targets: []config.TargetConfig{
+			{AllowedOrigins: []string{"feed-a", "feed-b"}},
+			{AllowedOrigins: []string{"feed-c"}},
+		},
+	}
+	var buf bytes.Buffer
+	logger := setupLogger(slog.LevelInfo, "text", &buf)
+
+	if err := runDaemon(context.Background(), cfg, logger); err != nil {
+		t.Fatalf("runDaemon() unexpected error: %v", err)
+	}
+
+	wantOrigins := []string{"feed-a", "feed-b", "feed-c"}
+	if len(passedOrigins) != len(wantOrigins) {
+		t.Fatalf("got origins %v, want %v", passedOrigins, wantOrigins)
+	}
+	for i := range wantOrigins {
+		if passedOrigins[i] != wantOrigins[i] {
+			t.Errorf("origin[%d] = %q, want %q", i, passedOrigins[i], wantOrigins[i])
+		}
+	}
+	if passedLimit != 32*1024*1024 {
+		t.Errorf("passedLimit = %d, want %d", passedLimit, 32*1024*1024)
 	}
 }

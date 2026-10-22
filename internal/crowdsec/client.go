@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,9 +17,9 @@ import (
 )
 
 const (
-	maxResponseBodyBytes = 16 * 1024 * 1024
-	defaultTimeout       = 30 * time.Second
-	bouncerName          = "crowdsec-cloudflare-list-bouncer"
+	defaultMaxResponseBodyBytes = 16 * 1024 * 1024
+	defaultTimeout              = 30 * time.Second
+	bouncerName                 = "crowdsec-cloudflare-list-bouncer"
 )
 
 func defaultNewRequestWithContext(ctx context.Context, method, rawURL string, body io.Reader) (*http.Request, error) {
@@ -66,16 +67,19 @@ func (e *APIError) IsRetryable() bool {
 
 // Client manages authenticated HTTP requests to the CrowdSec LAPI.
 type Client struct {
-	httpClient *http.Client
-	baseURL    string
-	apiKey     string
-	userAgent  string
+	httpClient           *http.Client
+	baseURL              string
+	apiKey               string
+	userAgent            string
+	origins              []string
+	maxResponseBodyBytes int64
 }
 
 // NewClient constructs a Client configured with base URL, authentication key,
-// release version, and custom transport options. The version is advertised in
-// the User-Agent header so the LAPI can store the bouncer type and version.
-func NewClient(baseURL, apiKey, version string, customClient *http.Client) *Client {
+// release version, allowed origins filter, response body size limit, and custom transport options.
+// Providing allowed origins instructs the LAPI stream endpoint to filter decisions at the source,
+// while maxResponseBodyBytes bounds response memory consumption to protect against memory exhaustion.
+func NewClient(baseURL, apiKey, version string, origins []string, maxBodyBytes int64, customClient *http.Client) *Client {
 	normalizedURL := baseURL
 	if !strings.HasSuffix(normalizedURL, "/") {
 		normalizedURL += "/"
@@ -98,20 +102,42 @@ func NewClient(baseURL, apiKey, version string, customClient *http.Client) *Clie
 		}
 	}
 
+	bodyLimit := maxBodyBytes
+	if bodyLimit <= 0 {
+		bodyLimit = defaultMaxResponseBodyBytes
+	}
+
+	var clonedOrigins []string
+	if len(origins) > 0 {
+		clonedOrigins = slices.Clone(origins)
+	}
+
 	return &Client{
-		httpClient: client,
-		baseURL:    normalizedURL,
-		apiKey:     apiKey,
-		userAgent:  userAgent,
+		httpClient:           client,
+		baseURL:              normalizedURL,
+		apiKey:               apiKey,
+		userAgent:            userAgent,
+		origins:              clonedOrigins,
+		maxResponseBodyBytes: bodyLimit,
 	}
 }
 
 // StreamDecisions fetches active or delta decisions from the LAPI stream endpoint with automated backoff retries.
 func (c *Client) StreamDecisions(ctx context.Context, startup bool) (StreamResponse, error) {
-	endpoint := c.baseURL + "v1/decisions/stream"
-	if startup {
-		endpoint += "?startup=true"
+	u, parseErr := url.Parse(c.baseURL + "v1/decisions/stream")
+	if parseErr != nil {
+		return StreamResponse{}, fmt.Errorf("parse stream url: %w", parseErr)
 	}
+
+	q := u.Query()
+	if startup {
+		q.Set("startup", "true")
+	}
+	if len(c.origins) > 0 {
+		q.Set("origins", strings.Join(c.origins, ","))
+	}
+	u.RawQuery = q.Encode()
+	endpoint := u.String()
 
 	var result StreamResponse
 	err := retry.Do(ctx, 5, 500*time.Millisecond, 10*time.Second, func(opCtx context.Context) (opErr error) {
@@ -133,7 +159,7 @@ func (c *Client) StreamDecisions(ctx context.Context, startup bool) (StreamRespo
 			}
 		}()
 
-		bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, maxResponseBodyBytes))
+		bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, c.maxResponseBodyBytes))
 		if readErr != nil {
 			return fmt.Errorf("read stream body: %w", readErr)
 		}

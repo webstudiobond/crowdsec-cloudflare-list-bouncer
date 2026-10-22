@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -28,11 +29,14 @@ func defaultFileClose(f *os.File) error {
 var fileClose = defaultFileClose
 
 const (
-	defaultAPIURL          = "http://127.0.0.1:8080/"
-	defaultPollInterval    = 10 * time.Second
-	defaultLogType         = "text"
-	defaultTargetsDir      = "/etc/crowdsec/bouncers/cloudflare-list-targets.d/"
-	defaultCFCommentPrefix = "crowdsec"
+	defaultAPIURL               = "http://127.0.0.1:8080/"
+	defaultPollInterval         = 10 * time.Second
+	defaultLogType              = "text"
+	defaultTargetsDir           = "/etc/crowdsec/bouncers/cloudflare-list-targets.d/"
+	defaultCFCommentPrefix      = "crowdsec"
+	defaultMaxResponseBodyBytes = 16 * 1024 * 1024
+	minMaxResponseBodyMB        = 16
+	maxMaxResponseBodyMB        = 512
 )
 
 // TargetConfig represents an individual Cloudflare account and destination list target.
@@ -50,24 +54,26 @@ type TargetConfig struct {
 
 // MainConfig aggregates the primary daemon settings and all active Cloudflare sync targets.
 type MainConfig struct {
-	APIURL       string
-	APIKey       string
-	LogType      string
-	TargetsDir   string
-	Targets      []TargetConfig
-	PollInterval time.Duration
-	LogLevel     slog.Level
+	APIURL               string
+	APIKey               string
+	LogType              string
+	TargetsDir           string
+	Targets              []TargetConfig
+	PollInterval         time.Duration
+	LogLevel             slog.Level
+	MaxResponseBodyBytes int64
 }
 
 // Load reads and validates the primary configuration file and its associated target directory.
 func Load(mainConfigPath string) (MainConfig, error) {
 	cfg := MainConfig{
-		Targets:      make([]TargetConfig, 0),
-		APIURL:       defaultAPIURL,
-		LogType:      defaultLogType,
-		TargetsDir:   defaultTargetsDir,
-		PollInterval: defaultPollInterval,
-		LogLevel:     slog.LevelInfo,
+		Targets:              make([]TargetConfig, 0),
+		APIURL:               defaultAPIURL,
+		LogType:              defaultLogType,
+		TargetsDir:           defaultTargetsDir,
+		PollInterval:         defaultPollInterval,
+		LogLevel:             slog.LevelInfo,
+		MaxResponseBodyBytes: defaultMaxResponseBodyBytes,
 	}
 
 	if mainConfigPath != "" {
@@ -175,6 +181,12 @@ func applyMainScalar(cfg *MainConfig, key, val string) error {
 		cfg.LogType = strings.ToLower(expanded)
 	case "targets_dir":
 		cfg.TargetsDir = expanded
+	case "max_response_body_mb":
+		bytesVal, parseErr := parseMaxResponseBodyMB(expanded)
+		if parseErr != nil {
+			return parseErr
+		}
+		cfg.MaxResponseBodyBytes = bytesVal
 	}
 	return nil
 }
@@ -306,6 +318,22 @@ func applyMainEnvOverrides(cfg *MainConfig) {
 	if val := os.Getenv("TARGETS_DIR"); val != "" {
 		cfg.TargetsDir = val
 	}
+	if val := os.Getenv("MAX_RESPONSE_BODY_MB"); val != "" {
+		if bytesVal, err := parseMaxResponseBodyMB(val); err == nil {
+			cfg.MaxResponseBodyBytes = bytesVal
+		}
+	}
+}
+
+func parseMaxResponseBodyMB(val string) (int64, error) {
+	num, err := strconv.ParseInt(strings.TrimSpace(val), 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%w: invalid max_response_body_mb %q: %w", ErrInvalidValue, val, err)
+	}
+	if num < minMaxResponseBodyMB || num > maxMaxResponseBodyMB {
+		return 0, fmt.Errorf("%w: max_response_body_mb must be between %d and %d, got %d", ErrInvalidValue, minMaxResponseBodyMB, maxMaxResponseBodyMB, num)
+	}
+	return num * 1024 * 1024, nil
 }
 
 func parseLogLevel(val string) (slog.Level, error) {

@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
+	"strings"
 	"syscall"
 
 	"github.com/webstudiobond/crowdsec-cloudflare-list-bouncer/internal/bouncer"
@@ -43,8 +45,8 @@ type daemonRunner interface {
 	Run(ctx context.Context) error
 }
 
-func defaultNewCrowdSecClient(apiURL, apiKey, version string, httpClient *http.Client) crowdsecChecker {
-	return crowdsec.NewClient(apiURL, apiKey, version, httpClient)
+func defaultNewCrowdSecClient(apiURL, apiKey, version string, origins []string, maxBodyBytes int64, httpClient *http.Client) crowdsecChecker {
+	return crowdsec.NewClient(apiURL, apiKey, version, origins, maxBodyBytes, httpClient)
 }
 
 func defaultNewCloudflareClient(token string, httpClient *http.Client) cloudflareChecker {
@@ -127,7 +129,7 @@ func setupLogger(level slog.Level, logType string, out io.Writer) *slog.Logger {
 func runTestMode(ctx context.Context, cfg *config.MainConfig, logger *slog.Logger) error {
 	logger.Info("validating configuration syntax and targets", "targets_count", len(cfg.Targets))
 
-	csClient := newCrowdSecClient(cfg.APIURL, cfg.APIKey, Version, nil)
+	csClient := newCrowdSecClient(cfg.APIURL, cfg.APIKey, Version, nil, cfg.MaxResponseBodyBytes, nil)
 	if err := csClient.TestConnection(ctx); err != nil {
 		logger.Error("CrowdSec LAPI connection failed", "url", cfg.APIURL, "error", err)
 		return fmt.Errorf("crowdsec connection failed: %w", err)
@@ -157,7 +159,8 @@ func runTestMode(ctx context.Context, cfg *config.MainConfig, logger *slog.Logge
 }
 
 func runDaemon(ctx context.Context, cfg *config.MainConfig, logger *slog.Logger) error {
-	csClient := newCrowdSecClient(cfg.APIURL, cfg.APIKey, Version, nil)
+	origins := collectTargetOrigins(cfg.Targets)
+	csClient := newCrowdSecClient(cfg.APIURL, cfg.APIKey, Version, origins, cfg.MaxResponseBodyBytes, nil)
 	factory := func(token string) bouncer.CloudflareListManager {
 		return newCloudflareClient(token, nil)
 	}
@@ -168,4 +171,25 @@ func runDaemon(ctx context.Context, cfg *config.MainConfig, logger *slog.Logger)
 		return fmt.Errorf("daemon error: %w", err)
 	}
 	return nil
+}
+
+func collectTargetOrigins(targets []config.TargetConfig) []string {
+	originSet := make(map[string]struct{})
+	for i := range targets {
+		for _, o := range targets[i].AllowedOrigins {
+			trimmed := strings.TrimSpace(o)
+			if trimmed != "" {
+				originSet[trimmed] = struct{}{}
+			}
+		}
+	}
+	if len(originSet) == 0 {
+		return nil
+	}
+	origins := make([]string, 0, len(originSet))
+	for o := range originSet {
+		origins = append(origins, o)
+	}
+	slices.Sort(origins)
+	return origins
 }
