@@ -1,3 +1,3 @@
 module github.com/webstudiobond/crowdsec-cloudflare-list-bouncer
 
-go 1.27.3
+go 1.27.4

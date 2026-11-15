@@ -49,7 +49,7 @@ security-trivy:
 	trivy fs --severity CRITICAL,HIGH .
 
 secrets-scan:
-	gitleaks detect --source . --no-git --no-color
+	gitleaks detect --source . --no-git --no-color -v --redact
 
 verify: go-verify shell-verify docker-lint security-trivy secrets-scan
 
